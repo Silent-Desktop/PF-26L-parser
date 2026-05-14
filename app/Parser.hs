@@ -22,21 +22,40 @@ data Expr
   | Sub Expr Expr
   | Mult Expr Expr
   | Div Expr Expr
-  | Conditional
   | MathExpr
-  | BoolMathExpr Expr CompOp Expr
+  | BoolMathExpr CompOp Expr Expr
+  | BoolLogicExpr EqOp Expr Expr
+  | BinOp BoolOp Expr Expr
+  | Conditional Expr
+  | Lit Keyword
   deriving (Show, Eq)
 
-data BoolOp = And | Or deriving (Show)
+data Keyword = KTrue | KFalse | KIf | KElse | KWhile | KFor | KDef | KReturn
+  deriving (Show, Eq)
 
-data CompOp = Gt | Lt | Gte | Lte | Equal | Neq deriving (Show, Eq)
+boolLit :: Parser Expr
+boolLit =
+  (keyword "True" >> return (Lit KTrue))
+    <|> (keyword "False" >> return (Lit KFalse))
+
+data BoolOp = And | Or deriving (Show, Eq)
+
+data EqOp = Equal | Neq deriving (Show, Eq)
+
+data CompOp = Gt | Lt | Gte | Lte | EqComp EqOp deriving (Show, Eq)
+
+eqOp :: Parser EqOp
+eqOp =
+  try (symbol "==" >> return Equal)
+    <|> try (symbol "!=" >> return Neq)
 
 compOp :: Parser CompOp
 compOp =
   try (symbol ">=" >> return Gte)
     <|> try (symbol "<=" >> return Lte)
-    <|> try (symbol "==" >> return Equal)
-    <|> try (symbol "!=" >> return Neq)
+    <|> ( EqComp
+            <$> eqOp
+        )
     <|> (symbol ">" >> return Gt)
     <|> (symbol "<" >> return Lt)
 
@@ -91,19 +110,26 @@ boolMathExpr = do
   left <- try mathExpr <|> variable <|> number
   operand <- compOp
   right <- try mathExpr <|> variable <|> number
-  return $ BoolMathExpr left operand right
+  return $ BoolMathExpr operand left right
 
--- boolExpr :: Parser Expr
--- boolExpr = do
---   left <- atom
---   rest left
---   where
---     rest left =
---       do
---         op <- boolOp
---         right <- atom
---         rest (BinOp op left right)
---         <|> return left
+boolLogicExpr :: Parser Expr
+boolLogicExpr = do
+  left <- try boolLit <|> variable
+  operand <- eqOp
+  right <- try boolLit <|> variable
+  return $ BoolLogicExpr operand left right
+
+boolExpr :: Parser Expr
+boolExpr = do
+  left <- try boolLogicExpr <|> try boolMathExpr <|> boolLit <|> variable
+  rest left
+  where
+    rest left =
+      do
+        op <- boolOp
+        right <- try boolLogicExpr <|> try boolMathExpr <|> boolLit <|> variable
+        rest (BinOp op left right)
+        <|> return left
 
 assign :: Parser Expr
 assign = do
@@ -112,10 +138,12 @@ assign = do
   expr <- number <|> variable
   return $ Assign name expr
 
-conditional :: Parser Expr
-conditional = do
+ifExpr :: Parser Expr
+ifExpr = do
   keyword "if"
-  return Conditional
+  content <- boolExpr
+  symbol ":"
+  return $ Conditional content
 
 statement :: Parser Expr
 statement = try assign <|> mathExpr
