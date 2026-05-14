@@ -1,7 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -Wno-unused-do-bind #-}
 
 module Parser where
 
+import Data.Bool (bool)
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO ()
@@ -22,9 +24,21 @@ data Expr
   | Div Expr Expr
   | Conditional
   | MathExpr
+  | BoolMathExpr Expr CompOp Expr
   deriving (Show, Eq)
 
 data BoolOp = And | Or deriving (Show)
+
+data CompOp = Gt | Lt | Gte | Lte | Equal | Neq deriving (Show, Eq)
+
+compOp :: Parser CompOp
+compOp =
+  try (symbol ">=" >> return Gte)
+    <|> try (symbol "<=" >> return Lte)
+    <|> try (symbol "==" >> return Equal)
+    <|> try (symbol "!=" >> return Neq)
+    <|> (symbol ">" >> return Gt)
+    <|> (symbol "<" >> return Lt)
 
 boolOp :: Parser BoolOp
 boolOp = (keyword "and" >> return And) <|> (keyword "or" >> return Or)
@@ -72,6 +86,13 @@ mathExpr = do
         <|> do symbol "/"; right <- variable <|> number; rest (Div left right)
         <|> return left
 
+boolMathExpr :: Parser Expr
+boolMathExpr = do
+  left <- try mathExpr <|> variable <|> number
+  operand <- compOp
+  right <- try mathExpr <|> variable <|> number
+  return $ BoolMathExpr left operand right
+
 -- boolExpr :: Parser Expr
 -- boolExpr = do
 --   left <- atom
@@ -97,4 +118,4 @@ conditional = do
   return Conditional
 
 statement :: Parser Expr
-statement = try assign <|> addExpr
+statement = try assign <|> mathExpr
