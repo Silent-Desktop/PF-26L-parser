@@ -60,12 +60,30 @@ assign = do
   symbol "="
   Assign name <$> valuable
 
-ifExpr :: Parser Expr
-ifExpr = do
+ifExprInner :: Parser Expr
+ifExprInner = do
   keyword "if"
   content <- boolExpr
+  return $ IfExpr content
+
+ifExpr :: Parser Expr
+ifExpr = do
+  expr <- ifExprInner
   symbol ":"
-  return $ Conditional content
+  return $ expr
+elifExpr :: Parser Expr
+elifExpr = do
+  keyword "elif"
+  content <- boolExpr
+  symbol ":"
+  return $ ElifExpr content
+
+elseExpr :: Parser Expr
+elseExpr = do
+  keyword "else"
+  content <- boolExpr
+  symbol ":"
+  return $ ElseExpr content
 
 whileExpr :: Parser Expr
 whileExpr = do
@@ -74,11 +92,40 @@ whileExpr = do
   symbol ":"
   return $ WhileLoop content
 
-forExpr :: Parser Expr
-forExpr = do
+forExprInner :: Parser Expr
+forExprInner = do
   keyword "for"
   iden <- identifier
   keyword "in"
   content <- valuable
-  symbol ":"
   return $ ForLoop  iden content
+forExpr :: Parser Expr
+forExpr = do
+  forLoop <- forExprInner
+  symbol ":"
+  return $ forLoop
+
+
+compIfs :: Parser [Expr]
+compIfs = do
+  condition <- optional ifExprInner
+  case condition of
+    Nothing -> return []
+    Just a -> rest [a]
+  where
+    rest acc =
+      do
+        next <- ifExprInner
+        rest (acc ++ [next])
+        <|> return acc
+listCompOptIfExpr :: Parser Expr
+listCompOptIfExpr = do
+    symbol "["
+    val <- valuable
+    forLoop <- forExpr
+    conditions <- compIfs
+    symbol "]"
+    return $ ListCompExpr val forLoop conditions
+
+    
+

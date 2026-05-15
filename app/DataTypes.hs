@@ -21,7 +21,9 @@ data Expr
   | BoolMathExpr CompOp Expr Expr
   | BoolLogicExpr EqOp Expr Expr
   | BinOp BoolOp Expr Expr
-  | Conditional Expr
+  | IfExpr Expr
+  | ElifExpr Expr
+  | ElseExpr Expr
   | WhileLoop Expr
   | ForLoop String Expr
   | MultilineStringLit String
@@ -29,6 +31,7 @@ data Expr
   | Lit Keyword
   | Call String [Arg]
   | FuncDeclExpr String [Arg]
+  | ListCompExpr Expr Expr [Expr]
   deriving (Show, Eq)
 
 data BoolOp = And | Or deriving (Show, Eq)

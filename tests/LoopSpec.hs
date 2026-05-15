@@ -7,6 +7,7 @@ import DataTypes
 import Parser
 import Test.Hspec
 import Text.Megaparsec (parse)
+import Math
 
 spec :: Spec
 spec = do
@@ -66,3 +67,27 @@ spec = do
                 parse statement "" "x in y:" `shouldSatisfy` isLeft
             it "fails with empty input" $
                 parse statement "" "" `shouldSatisfy` isLeft
+    describe "listCompExpr" $ do
+        describe "basic" $ do
+            it "parses simple list comp" $
+                parse listCompOptIfExpr "" "[x for x in y:]" `shouldBe` Right (ListCompExpr (Var "x") (ForLoop "x" (Var "y")) [])
+            it "parses list comp with expression" $
+                parse listCompOptIfExpr "" "[x + 1 for x in y:]" `shouldBe` Right (ListCompExpr (Add (Var "x") (Number 1)) (ForLoop "x" (Var "y")) [])
+            it "parses list comp with range" $
+                parse listCompOptIfExpr "" "[x for x in range(10):]" `shouldBe` Right (ListCompExpr (Var "x") (ForLoop "x" (Call "range" [PosArg (Number 10)])) [])
+            it "parses list comp with function call as value" $
+                parse listCompOptIfExpr "" "[f(x) for x in y:]" `shouldBe` Right (ListCompExpr (Call "f" [PosArg (Var "x")]) (ForLoop "x" (Var "y")) [])
+        describe "with conditions" $ do
+            it "parses list comp with if" $
+                parse listCompOptIfExpr "" "[x for x in y: if x > 0]" `shouldBe` Right (ListCompExpr (Var "x") (ForLoop "x" (Var "y")) [IfExpr (BoolMathExpr Gt (Var "x") (Number 0))])
+            it "parses list comp with multiple ifs" $
+                parse listCompOptIfExpr "" "[x for x in y: if x > 0 if x < 10]" `shouldBe` Right (ListCompExpr (Var "x") (ForLoop "x" (Var "y")) [IfExpr (BoolMathExpr Gt (Var "x") (Number 0)), IfExpr (BoolMathExpr Lt (Var "x") (Number 10))])
+        describe "invalid input" $ do
+            it "fails with no closing bracket" $
+                parse listCompOptIfExpr "" "[x for x in y:" `shouldSatisfy` isLeft
+            it "fails with no for" $
+                parse listCompOptIfExpr "" "[x in y:]" `shouldSatisfy` isLeft
+            it "fails with no opening bracket" $
+                parse listCompOptIfExpr "" "x for x in y:" `shouldSatisfy` isLeft
+            it "fails with empty input" $
+                parse listCompOptIfExpr "" "" `shouldSatisfy` isLeft

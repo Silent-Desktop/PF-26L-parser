@@ -87,26 +87,26 @@ spec = do
       describe "statement" $ do
         describe "with bool literals" $ do
           it "parses if True:" $
-            parse statement "" "if True:" `shouldBe` Right (Conditional (Lit KTrue))
+            parse statement "" "if True:" `shouldBe` Right (IfExpr (Lit KTrue))
           it "parses if False:" $
-            parse statement "" "if False:" `shouldBe` Right (Conditional (Lit KFalse))
+            parse statement "" "if False:" `shouldBe` Right (IfExpr (Lit KFalse))
         describe "with comparisons" $ do
           it "parses if x > 6:" $
-            parse statement "" "if x > 6: " `shouldBe` Right (Conditional (BoolMathExpr Gt (Var "x") (Number 6)))
+            parse statement "" "if x > 6: " `shouldBe` Right (IfExpr (BoolMathExpr Gt (Var "x") (Number 6)))
           it "parses if x == 6:" $
-            parse statement "" "if x == 6: " `shouldBe` Right (Conditional (BoolLogicExpr (Equal) (Var "x") (Number 6)))
+            parse statement "" "if x == 6: " `shouldBe` Right (IfExpr (BoolLogicExpr (Equal) (Var "x") (Number 6)))
           it "parses if x != y:" $
-            parse statement "" "if x != y: " `shouldBe` Right (Conditional (BoolLogicExpr (Neq) (Var "x") (Var "y")))
+            parse statement "" "if x != y: " `shouldBe` Right (IfExpr (BoolLogicExpr (Neq) (Var "x") (Var "y")))
         describe "with bool logic" $ do
           it "parses if x == True:" $
-            parse statement "" "if x == True: " `shouldBe` Right (Conditional (BoolLogicExpr Equal (Var "x") (Lit KTrue)))
+            parse statement "" "if x == True: " `shouldBe` Right (IfExpr (BoolLogicExpr Equal (Var "x") (Lit KTrue)))
           it "parses if True == False:" $
-            parse statement "" "if True == False: " `shouldBe` Right (Conditional (BoolLogicExpr Equal (Lit KTrue) (Lit KFalse)))
+            parse statement "" "if True == False: " `shouldBe` Right (IfExpr (BoolLogicExpr Equal (Lit KTrue) (Lit KFalse)))
         describe "with and/or" $ do
           it "parses if x > 6 and y < 2:" $
-            parse statement "" "if x > 6.0 and y < 2: " `shouldBe` Right (Conditional (BinOp And (BoolMathExpr Gt (Var "x") (FloatNum 6.0)) (BoolMathExpr Lt (Var "y") (Number 2))))
+            parse statement "" "if x > 6.0 and y < 2: " `shouldBe` Right (IfExpr (BinOp And (BoolMathExpr Gt (Var "x") (FloatNum 6.0)) (BoolMathExpr Lt (Var "y") (Number 2))))
           it "parses if x > 6 or y < 2:" $
-            parse statement "" "if x > 6 or y < 2: " `shouldBe` Right (Conditional (BinOp Or (BoolMathExpr Gt (Var "x") (Number 6)) (BoolMathExpr Lt (Var "y") (Number 2))))
+            parse statement "" "if x > 6 or y < 2: " `shouldBe` Right (IfExpr (BinOp Or (BoolMathExpr Gt (Var "x") (Number 6)) (BoolMathExpr Lt (Var "y") (Number 2))))
         describe "invalid input" $ do
           it "fails with no colon" $
             parse statement "" "if True" `shouldSatisfy` isLeft
