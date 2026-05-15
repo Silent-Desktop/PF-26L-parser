@@ -3,9 +3,12 @@
 module Assignment (spec) where
 
 import Data.Either (isLeft)
+import DataTypes
+import Math
 import Parser
 import Test.Hspec
 import Text.Megaparsec (parse)
+import Utils
 
 spec :: Spec
 spec = do
@@ -102,7 +105,7 @@ spec = do
             parse ifExpr "" "if True == False:" `shouldBe` Right (Conditional (BoolLogicExpr Equal (Lit KTrue) (Lit KFalse)))
         describe "with and/or" $ do
           it "parses if x > 6 and y < 2:" $
-            parse ifExpr "" "if x > 6 and y < 2:" `shouldBe` Right (Conditional (BinOp And (BoolMathExpr Gt (Var "x") (Number 6)) (BoolMathExpr Lt (Var "y") (Number 2))))
+            parse ifExpr "" "if x > 6.0 and y < 2:" `shouldBe` Right (Conditional (BinOp And (BoolMathExpr Gt (Var "x") (FloatNum 6.0)) (BoolMathExpr Lt (Var "y") (Number 2))))
           it "parses if x > 6 or y < 2:" $
             parse ifExpr "" "if x > 6 or y < 2:" `shouldBe` Right (Conditional (BinOp Or (BoolMathExpr Gt (Var "x") (Number 6)) (BoolMathExpr Lt (Var "y") (Number 2))))
         describe "invalid input" $ do
