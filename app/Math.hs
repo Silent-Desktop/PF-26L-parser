@@ -44,14 +44,14 @@ boolLogicExpr = do
 
 boolExpr :: Parser Expr
 boolExpr = do
-  left <- valuable
-  rest left
+    left <- try boolLogicExpr <|> try boolMathExpr <|> valuable
+    rest left
   where
     rest left =
-      do
-        op <- boolOp
-        right <- valuable
-        rest (BinOp op left right)
+        do
+            op <- boolOp
+            right <-  try boolLogicExpr <|>try boolMathExpr <|> valuable
+            rest (BinOp op left right)
         <|> return left
 
 assign :: Parser Expr
@@ -73,3 +73,12 @@ whileExpr = do
   content <- boolExpr
   symbol ":"
   return $ WhileLoop content
+
+forExpr :: Parser Expr
+forExpr = do
+  keyword "for"
+  iden <- identifier
+  keyword "in"
+  content <- valuable
+  symbol ":"
+  return $ ForLoop  iden content

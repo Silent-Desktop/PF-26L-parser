@@ -8,6 +8,12 @@ import DataTypes
 import Math
 import Text.Megaparsec
 import Valuable
+import Text.Megaparsec.Char (hspace, eol)
+import Control.Monad (void)
+
+
+statementEnd :: Parser ()
+statementEnd = hspace *> (void eol <|> eof)
 
 statement :: Parser Expr
-statement = try ifExpr <|> try functionDeclarationExpr <|> valuable
+statement = (try ifExpr<|> try forExpr <|> try whileExpr <|> try assign <|>try boolLogicExpr<|>try boolMathExpr <|> valuable)<* statementEnd

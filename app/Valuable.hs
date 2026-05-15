@@ -9,8 +9,9 @@ import Literals
 import Text.Megaparsec
 import Utils
 
+
 atom :: Parser Expr
-atom = try call <|> boolLit <|> stringLit <|> variable <|> number
+atom = try call <|> try boolLit <|> try stringLit <|> try variable <|> number
 
 mathExpr :: Parser Expr
 mathExpr = do

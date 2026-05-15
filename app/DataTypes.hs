@@ -23,6 +23,7 @@ data Expr
   | BinOp BoolOp Expr Expr
   | Conditional Expr
   | WhileLoop Expr
+  | ForLoop String Expr
   | MultilineStringLit String
   | StringLit String
   | Lit Keyword
