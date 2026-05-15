@@ -9,20 +9,23 @@ import Literals
 import Text.Megaparsec
 import Utils
 
+atom :: Parser Expr
+atom = try call <|> boolLit <|> stringLit <|> variable <|> number
+
 mathExpr :: Parser Expr
 mathExpr = do
-  left <- valuable
+  left <- atom
   rest left
   where
     rest left =
-      do symbol "+"; right <- valuable; rest (Add left right)
-        <|> do symbol "-"; right <- valuable; rest (Sub left right)
-        <|> do symbol "*"; right <- variable <|> number; rest (Mult left right)
-        <|> do symbol "/"; right <- variable <|> number; rest (Div left right)
+      do symbol "+"; right <- atom; rest (Add left right)
+        <|> do symbol "-"; right <- atom; rest (Sub left right)
+        <|> do symbol "*"; right <- atom; rest (Mult left right)
+        <|> do symbol "/"; right <- atom; rest (Div left right)
         <|> return left
 
 valuable :: Parser Expr
-valuable = try call <|> try mathExpr <|> boolLit <|> stringLit <|> variable <|> number
+valuable =try mathExpr <|> atom
 
 posArg :: Parser Arg
 posArg = PosArg <$> valuable
@@ -69,3 +72,4 @@ functionDeclarationExpr = do
   symbol ")"
   symbol ":"
   return $ FuncDeclExpr name arguments
+

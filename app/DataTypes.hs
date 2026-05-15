@@ -22,6 +22,7 @@ data Expr
   | BoolLogicExpr EqOp Expr Expr
   | BinOp BoolOp Expr Expr
   | Conditional Expr
+  | WhileLoop Expr
   | MultilineStringLit String
   | StringLit String
   | Lit Keyword

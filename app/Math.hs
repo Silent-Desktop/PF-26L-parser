@@ -66,3 +66,10 @@ ifExpr = do
   content <- boolExpr
   symbol ":"
   return $ Conditional content
+
+whileExpr :: Parser Expr
+whileExpr = do
+  keyword "while"
+  content <- boolExpr
+  symbol ":"
+  return $ WhileLoop content

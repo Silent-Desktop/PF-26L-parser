@@ -22,15 +22,16 @@ library
         Valuable
     hs-source-dirs:   app
     build-depends:
-        base ^>=4.18.3.0,
+         base ^>=4.18 || ^>=4.19 || ^>=4.20 || ^>=4.21 || ^>=4.22,
         megaparsec,
-        text ^>=2.0
+        text
     default-language: Haskell2010
 
 executable parser
     import:           warnings
     hs-source-dirs:   app
     main-is:          Main.hs
+    ghc-options: -Wall -O0 
     other-modules:
         Parser
         DataTypes
@@ -39,10 +40,10 @@ executable parser
         Math
         Utils
     build-depends:
-        base ^>=4.18.3.0,
+         base ^>=4.18 || ^>=4.19 || ^>=4.20 || ^>=4.21 || ^>=4.22,
         parser,
         megaparsec,
-        text ^>=2.0
+        text 
     default-language: Haskell2010
 
 test-suite parser-tests
@@ -54,7 +55,7 @@ test-suite parser-tests
         Assignment
         CallSpec
     build-depends:
-        base ^>=4.18.3.0,
+         base ^>=4.18 || ^>=4.19 || ^>=4.20 || ^>=4.21 || ^>=4.22,
         hspec,
         megaparsec,
         parser
