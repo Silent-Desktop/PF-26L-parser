@@ -8,6 +8,7 @@ import DataTypes
 import Literals
 import Text.Megaparsec
 import Utils
+import qualified Text.Megaparsec.Char.Lexer as L
 
 
 parens :: Parser Expr
@@ -220,7 +221,18 @@ listCompExpr :: Parser Expr
 listCompExpr = do
     symbol "["
     val <- try ternary <|> baseExpr
-    forLoop <- forExpr
+    forLoop <- forExprInner
     conditions <- compIfs
     symbol "]"
     return $ ListCompExpr val forLoop conditions
+
+returnExpr :: Parser Expr
+returnExpr = do
+  keyword "return"
+  Return <$> valuable
+
+commentExpr :: Parser Expr
+commentExpr = do
+  symbol "#"
+  content <- many (satisfy (/= '\n'))
+  return $ Comment content

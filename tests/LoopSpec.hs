@@ -60,9 +60,9 @@ spec = do
             it "fails with no colon" $
                 parse statement "" "for x in y" `shouldSatisfy` isLeft
             it "fails with no iterable" $
-                parse statement "" "for x in :" `shouldSatisfy` isLeft
+                parse statement "" "for x in " `shouldSatisfy` isLeft
             it "fails with no variable" $
-                parse statement "" "for in y:" `shouldSatisfy` isLeft
+                parse statement "" "for in y" `shouldSatisfy` isLeft
             it "fails without for keyword" $
                 parse statement "" "x in y:" `shouldSatisfy` isLeft
             it "fails with empty input" $
@@ -70,27 +70,27 @@ spec = do
     describe "listCompExpr" $ do
         describe "basic" $ do
             it "parses simple list comp" $
-                parse listCompExpr "" "[x for x in y:]" `shouldBe` Right (ListCompExpr (Var "x") (ForLoop "x" (Var "y")) [])
+                parse listCompExpr "" "[x for x in y]" `shouldBe` Right (ListCompExpr (Var "x") (ForLoop "x" (Var "y")) [])
             it "parses list comp with expression" $
-                parse listCompExpr "" "[x + 1 for x in y:]" `shouldBe` Right (ListCompExpr (Add (Var "x") (Number 1)) (ForLoop "x" (Var "y")) [])
+                parse listCompExpr "" "[x + 1 for x in y]" `shouldBe` Right (ListCompExpr (Add (Var "x") (Number 1)) (ForLoop "x" (Var "y")) [])
             it "parses list comp with range" $
-                parse listCompExpr "" "[x for x in range(10):]" `shouldBe` Right (ListCompExpr (Var "x") (ForLoop "x" (Call "range" [PosArg (Number 10)])) [])
+                parse listCompExpr "" "[x for x in range(10)]" `shouldBe` Right (ListCompExpr (Var "x") (ForLoop "x" (Call "range" [PosArg (Number 10)])) [])
             it "parses list comp with function call as value" $
-                parse listCompExpr "" "[f(x) for x in y:]" `shouldBe` Right (ListCompExpr (Call "f" [PosArg (Var "x")]) (ForLoop "x" (Var "y")) [])
+                parse listCompExpr "" "[f(x) for x in y]" `shouldBe` Right (ListCompExpr (Call "f" [PosArg (Var "x")]) (ForLoop "x" (Var "y")) [])
         describe "with ternary value" $ do
             it "parses list comp with ternary value" $
-                parse listCompExpr "" "[x if x > 0 else 0 for x in y:]" `shouldBe` Right (ListCompExpr (Ternary (IfExpr (BoolMathExpr Gt (Var "x") (Number 0))) (Var "x") (Number 0)) (ForLoop "x" (Var "y")) [])
+                parse listCompExpr "" "[x if x > 0 else 0 for x in y]" `shouldBe` Right (ListCompExpr (Ternary (IfExpr (BoolMathExpr Gt (Var "x") (Number 0))) (Var "x") (Number 0)) (ForLoop "x" (Var "y")) [])
             it "parses list comp with ternary and variable else" $
-                parse listCompExpr "" "[x if x > 0 else z for x in y:]" `shouldBe` Right (ListCompExpr (Ternary (IfExpr (BoolMathExpr Gt (Var "x") (Number 0))) (Var "x") (Var "z")) (ForLoop "x" (Var "y")) [])
+                parse listCompExpr "" "[x if x > 0 else z for x in y]" `shouldBe` Right (ListCompExpr (Ternary (IfExpr (BoolMathExpr Gt (Var "x") (Number 0))) (Var "x") (Var "z")) (ForLoop "x" (Var "y")) [])
             it "parses list comp with call as ternary value" $
-                parse listCompExpr "" "[f(x) if x > 0 else g(x) for x in y:]" `shouldBe` Right (ListCompExpr (Ternary (IfExpr (BoolMathExpr Gt (Var "x") (Number 0))) (Call "f" [PosArg (Var "x")]) (Call "g" [PosArg (Var "x")])) (ForLoop "x" (Var "y")) [])
+                parse listCompExpr "" "[f(x) if x > 0 else g(x) for x in y]" `shouldBe` Right (ListCompExpr (Ternary (IfExpr (BoolMathExpr Gt (Var "x") (Number 0))) (Call "f" [PosArg (Var "x")]) (Call "g" [PosArg (Var "x")])) (ForLoop "x" (Var "y")) [])
             it "parses list comp with range and ternary" $
-                parse listCompExpr "" "[x if x > 0 else 0 for x in range(10):]" `shouldBe` Right (ListCompExpr (Ternary (IfExpr (BoolMathExpr Gt (Var "x") (Number 0))) (Var "x") (Number 0)) (ForLoop "x" (Call "range" [PosArg (Number 10)])) [])
+                parse listCompExpr "" "[x if x > 0 else 0 for x in range(10)]" `shouldBe` Right (ListCompExpr (Ternary (IfExpr (BoolMathExpr Gt (Var "x") (Number 0))) (Var "x") (Number 0)) (ForLoop "x" (Call "range" [PosArg (Number 10)])) [])
         describe "with conditions" $ do
             it "parses list comp with if" $
-                parse listCompExpr "" "[x for x in y: if x > 0]" `shouldBe` Right (ListCompExpr (Var "x") (ForLoop "x" (Var "y")) [IfExpr (BoolMathExpr Gt (Var "x") (Number 0))])
+                parse listCompExpr "" "[x for x in y if x > 0]" `shouldBe` Right (ListCompExpr (Var "x") (ForLoop "x" (Var "y")) [IfExpr (BoolMathExpr Gt (Var "x") (Number 0))])
             it "parses list comp with multiple ifs" $
-                parse listCompExpr "" "[x for x in y: if x > 0 if x < 10]" `shouldBe` Right (ListCompExpr (Var "x") (ForLoop "x" (Var "y")) [IfExpr (BoolMathExpr Gt (Var "x") (Number 0)), IfExpr (BoolMathExpr Lt (Var "x") (Number 10))])
+                parse listCompExpr "" "[x for x in y if x > 0 if x < 10]" `shouldBe` Right (ListCompExpr (Var "x") (ForLoop "x" (Var "y")) [IfExpr (BoolMathExpr Gt (Var "x") (Number 0)), IfExpr (BoolMathExpr Lt (Var "x") (Number 10))])
         describe "invalid input" $ do
             it "fails with no closing bracket" $
                 parse listCompExpr "" "[x for x in y:" `shouldSatisfy` isLeft
@@ -109,37 +109,37 @@ spec = do
             it "parses ternary in ternary fallback" $
                 parse statement "" "x if x > 0 else y if y > 0 else 0" `shouldBe` Right (Ternary (IfExpr (BoolMathExpr Gt (Var "x") (Number 0))) (Var "x") (Ternary (IfExpr (BoolMathExpr Gt (Var "y") (Number 0))) (Var "y") (Number 0)))
             it "parses ternary as list comp value" $
-                parse statement "" "[x if x > 0 else 0 for x in y:]" `shouldBe` Right (ListCompExpr (Ternary (IfExpr (BoolMathExpr Gt (Var "x") (Number 0))) (Var "x") (Number 0)) (ForLoop "x" (Var "y")) [])
+                parse statement "" "[x if x > 0 else 0 for x in y]" `shouldBe` Right (ListCompExpr (Ternary (IfExpr (BoolMathExpr Gt (Var "x") (Number 0))) (Var "x") (Number 0)) (ForLoop "x" (Var "y")) [])
             it "parses list comp as ternary fallback" $
-                parse statement "" "x if x > 0 else [y for y in z:]" `shouldBe` Right (Ternary (IfExpr (BoolMathExpr Gt (Var "x") (Number 0))) (Var "x") (ListCompExpr (Var "y") (ForLoop "y" (Var "z")) []))
+                parse statement "" "x if x > 0 else [y for y in z]" `shouldBe` Right (Ternary (IfExpr (BoolMathExpr Gt (Var "x") (Number 0))) (Var "x") (ListCompExpr (Var "y") (ForLoop "y" (Var "z")) []))
             it "parses list comp as ternary value" $
-                parse statement "" "[x for x in y:] if True else z" `shouldBe` Right (Ternary (IfExpr (Lit KTrue)) (ListCompExpr (Var "x") (ForLoop "x" (Var "y")) []) (Var "z"))
+                parse statement "" "[x for x in y] if True else z" `shouldBe` Right (Ternary (IfExpr (Lit KTrue)) (ListCompExpr (Var "x") (ForLoop "x" (Var "y")) []) (Var "z"))
         describe "nested list comprehensions" $ do
             it "parses list comp in list comp iterable" $
-                parse statement "" "[x for x in [y for y in z:]:]" `shouldBe` Right (ListCompExpr (Var "x") (ForLoop "x" (ListCompExpr (Var "y") (ForLoop "y" (Var "z")) [])) [])
+                parse statement "" "[x for x in [y for y in z]]" `shouldBe` Right (ListCompExpr (Var "x") (ForLoop "x" (ListCompExpr (Var "y") (ForLoop "y" (Var "z")) [])) [])
             it "parses list comp multiplied" $
-                parse statement "" "[x for x in y:] * 2" `shouldBe` Right (Mult (ListCompExpr (Var "x") (ForLoop "x" (Var "y")) []) (Number 2))
+                parse statement "" "[x for x in y] * 2" `shouldBe` Right (Mult (ListCompExpr (Var "x") (ForLoop "x" (Var "y")) []) (Number 2))
             it "parses number multiplied by list comp" $
-                parse statement "" "2 * [x for x in y:]" `shouldBe` Right (Mult (Number 2) (ListCompExpr (Var "x") (ForLoop "x" (Var "y")) []))
+                parse statement "" "2 * [x for x in y]" `shouldBe` Right (Mult (Number 2) (ListCompExpr (Var "x") (ForLoop "x" (Var "y")) []))
         describe "nested function calls" $ do
             it "parses call as arg to call" $
                 parse statement "" "f(g(x))" `shouldBe` Right (Call "f" [PosArg (Call "g" [PosArg (Var "x")])])
             it "parses list comp as arg to call" $
-                parse statement "" "f([x for x in y:])" `shouldBe` Right (Call "f" [PosArg (ListCompExpr (Var "x") (ForLoop "x" (Var "y")) [])])
+                parse statement "" "f([x for x in y])" `shouldBe` Right (Call "f" [PosArg (ListCompExpr (Var "x") (ForLoop "x" (Var "y")) [])])
             it "parses ternary as arg to call" $
                 parse statement "" "f(x if x > 0 else 0)" `shouldBe` Right (Call "f" [PosArg (Ternary (IfExpr (BoolMathExpr Gt (Var "x") (Number 0))) (Var "x") (Number 0))])
             it "parses call in list comp iterable" $
-                parse statement "" "[x for x in range(10):]" `shouldBe` Right (ListCompExpr (Var "x") (ForLoop "x" (Call "range" [PosArg (Number 10)])) [])
+                parse statement "" "[x for x in range(10)]" `shouldBe` Right (ListCompExpr (Var "x") (ForLoop "x" (Call "range" [PosArg (Number 10)])) [])
         describe "nested math" $ do
             it "parses ternary in math expression" $
                 parse statement "" "(x if x > 0 else 0) + 1" `shouldSatisfy` isRight
             it "parses call result in math" $
                 parse statement "" "f(x) + g(x)" `shouldBe` Right (Add (Call "f" [PosArg (Var "x")]) (Call "g" [PosArg (Var "x")]))
             it "parses list comp addition" $
-                parse statement "" "[x for x in y:] + [z for z in w:]" `shouldBe` Right (Add (ListCompExpr (Var "x") (ForLoop "x" (Var "y")) []) (ListCompExpr (Var "z") (ForLoop "z" (Var "w")) []))
+                parse statement "" "[x for x in y] + [z for z in w]" `shouldBe` Right (Add (ListCompExpr (Var "x") (ForLoop "x" (Var "y")) []) (ListCompExpr (Var "z") (ForLoop "z" (Var "w")) []))
         describe "Everything" $ do
             it "parses complex nested expression" $
-                parse statement "" "[f(x, y=z) if (x := g(True)) > 0 else [y for y in range(10): if y != False] for x in h(1, 2): if x == True if x <= 10]"
+                parse statement "" "[f(x, y=z) if (x := g(True)) > 0 else [y for y in range(10) if y != False] for x in h(1, 2) if x == True if x <= 10]"
                 `shouldBe` Right (ListCompExpr
                     (Ternary
                         (IfExpr (BoolMathExpr Gt (Assign "x" (Call "g" [PosArg (Lit KTrue)])) (Number 0)))

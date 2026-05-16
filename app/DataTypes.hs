@@ -32,6 +32,8 @@ data Expr
   | Call String [Arg]
   | FuncDeclExpr String [Arg]
   | ListCompExpr Expr Expr [Expr]
+  | Return Expr
+  | Comment String
   | Ternary Expr Expr Expr -- Condition | Value | Value if else
   deriving (Show, Eq)
 

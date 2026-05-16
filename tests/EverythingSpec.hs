@@ -8,7 +8,7 @@ spec :: Spec
 spec = do
     describe "Everything" $ do
         it "parses complex nested expression" $
-            parse statement "" "[f(x, y=z) if (x := g(True)) > 0 else [y for y in range(10): if y != False] for x in h(1, 2): if x == True if x <= 10]"
+            parse statement "" "[f(x, y=z) if (x := g(True)) > 0 else [y for y in range(10) if y != False] for x in h(1, 2) if x == True if x <= 10]"
             `shouldBe` Right (ListCompExpr
                 (Ternary
                     (IfExpr (BoolMathExpr Gt (Assign "x" (Call "g" [PosArg (Lit KTrue)])) (Number 0)))

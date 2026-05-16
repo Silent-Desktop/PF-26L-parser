@@ -21,10 +21,10 @@ reserved = ["if", "else", "while", "for", "def", "return", "True", "False"]
 
 identifier :: Parser String
 identifier = helper $ do
-  name <- (:) <$> letterChar <*> many alphaNumChar
-  if name `elem` reserved
-    then fail $ name ++ " is a reserved keyword"
-    else return name
+    name <- (:) <$> (letterChar <|> char '_') <*> many (alphaNumChar <|> char '_')
+    if name `elem` reserved
+        then fail $ name ++ " is a reserved keyword"
+        else return name
 
 variable :: Parser Expr
 variable = Var <$> identifier
@@ -34,3 +34,4 @@ keyword kw = helper (string kw <* notFollowedBy alphaNumChar)
 
 symbol :: Text -> Parser Text
 symbol = L.symbol pr
+
