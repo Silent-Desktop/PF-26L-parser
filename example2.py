@@ -131,6 +131,11 @@ def with_args(a, b):
     return a + b
 
 
+class HelloWorld(Inherit):
+    def __init__(self, hello):
+        print("Hello world")
+
+
 def with_defaults(a, b, c=1):
     return a + b + c
 

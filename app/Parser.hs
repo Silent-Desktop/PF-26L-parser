@@ -6,7 +6,6 @@ module Parser
     module DataTypes,
     Line (..),
     statement,
-    statementWithLine,
     statementEnd,
     blankLine,
     strippedStatement,
@@ -21,7 +20,8 @@ import Text.Megaparsec
 import Text.Megaparsec.Char (char, eol, hspace)
 import Valuable
 
-data Line = Line Expr (Maybe Expr) deriving (Show, Eq)
+data Line = Line Expr (Maybe Expr) Int SourcePos
+  deriving (Show, Eq)
 
 blankLine :: Parser ()
 blankLine = hspace *> void eol
@@ -29,8 +29,24 @@ blankLine = hspace *> void eol
 strippedStatement :: Parser Line
 strippedStatement = do
   many (try blankLine)
-  many (char ' ' <|> char '\t')
-  statementWithLine
+  spaces <- many (char ' ' <|> char '\t')
+  let indent = length spaces
+  pos <- getSourcePos
+  expr <-
+    try commentExpr
+      <|> try assign
+      <|> try ifExpr
+      <|> try elifExpr
+      <|> try elseExpr
+      <|> try forExpr
+      <|> try whileExpr
+      <|> try functionDeclarationExpr
+      <|> try returnExpr
+      <|> try classExpr
+      <|> try passExpr
+      <|> valuable
+  comment <- statementEnd
+  return $ Line expr comment indent pos
 
 program :: Parser [Line]
 program = many strippedStatement <* eof
@@ -47,20 +63,3 @@ statement = do
   expr <- try commentExpr <|> try ifExpr <|> try forExpr <|> try whileExpr <|> try assign <|> try functionDeclarationExpr <|> try boolLogicExpr <|> try classExpr <|> try boolMathExpr <|> try returnExpr <|> valuable
   _comment <- statementEnd
   return expr
-
-statementWithLine :: Parser Line
-statementWithLine = do
-  expr <-
-    try commentExpr
-      <|> try assign
-      <|> try ifExpr
-      <|> try elifExpr
-      <|> try elseExpr
-      <|> try forExpr
-      <|> try whileExpr
-      <|> try functionDeclarationExpr
-      <|> try returnExpr
-      <|> try classExpr
-      <|> try passExpr
-      <|> valuable
-  Line expr <$> statementEnd
