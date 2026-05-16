@@ -5,7 +5,6 @@ module Parser where
 
 import qualified Data.Text.IO ()
 import DataTypes
-import Math
 import Text.Megaparsec
 import Valuable
 import Text.Megaparsec.Char (hspace, eol)

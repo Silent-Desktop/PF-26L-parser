@@ -32,6 +32,7 @@ data Expr
   | Call String [Arg]
   | FuncDeclExpr String [Arg]
   | ListCompExpr Expr Expr [Expr]
+  | Ternary Expr Expr Expr -- Condition | Value | Value if else
   deriving (Show, Eq)
 
 data BoolOp = And | Or deriving (Show, Eq)
