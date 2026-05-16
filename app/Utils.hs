@@ -11,7 +11,7 @@ import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
 
 pr :: Parser ()
-pr = L.space space1 empty empty
+pr = L.space hspace1 empty empty
 
 helper :: Parser a -> Parser a
 helper = L.lexeme pr

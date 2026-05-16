@@ -7,9 +7,23 @@ import qualified Data.Text.IO ()
 import DataTypes
 import Text.Megaparsec
 import Valuable
-import Text.Megaparsec.Char (hspace, eol)
+import Text.Megaparsec.Char (hspace, eol,char)
 import Control.Monad (void)
 data Line = Line Expr (Maybe Expr) deriving (Show, Eq)
+
+
+blankLine :: Parser ()
+blankLine = hspace *> void eol
+
+
+strippedStatement :: Parser Line
+strippedStatement = do
+    many (try blankLine)
+    many (char ' ' <|> char '\t')
+    statementWithLine
+
+program :: Parser [Line]
+program = many strippedStatement <* eof
 
 statementEnd :: Parser (Maybe Expr)
 statementEnd = do
@@ -26,6 +40,15 @@ statement = do
 
 statementWithLine :: Parser Line
 statementWithLine = do
-    expr <- try commentExpr <|> try ifExpr <|> try forExpr <|> try whileExpr <|> try functionDeclarationExpr <|> try assign <|> try boolLogicExpr <|> try boolMathExpr <|> try returnExpr <|> valuable
+    expr <- try commentExpr 
+        <|> try ifExpr 
+        <|> try forExpr 
+        <|> try whileExpr 
+        <|> try functionDeclarationExpr 
+        <|> try assign
+        <|> try boolLogicExpr 
+        <|> try boolMathExpr 
+        <|> try returnExpr 
+        <|> valuable
     comment <- statementEnd
     return $ Line expr comment

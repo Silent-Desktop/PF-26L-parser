@@ -5,6 +5,8 @@ if __name__ == "__main__":
 
 
 def funcName(x, y, z, p=None):
+    """Multiline
+    comment"""
     # This is a comment
     y = 1 + 2  # This is another comment
     if x == y and y or z and p == True or z == p:

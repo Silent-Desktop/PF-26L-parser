@@ -1,26 +1,31 @@
+
+{-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -Wno-unused-do-bind #-}
 module Main where
 
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import Parser
+import Control.Monad (void)
 import Text.Megaparsec (errorBundlePretty, parse)
-
-indentLevel :: T.Text -> Int
-indentLevel = T.length . T.takeWhile (== ' ')
-
-parseLine :: Int -> T.Text -> IO ()
-parseLine lineNum line
-    | T.null (T.strip line) = return ()
-    | otherwise = case parse statementWithLine (show lineNum) (T.stripStart line) of
-        Left err              -> putStrLn $ "Line " ++ show lineNum ++ ": " ++ errorBundlePretty err
-        Right (Line expr Nothing)      -> putStrLn $ "Line " ++ show lineNum ++ ": " ++ show expr
-        Right (Line expr (Just comment)) -> putStrLn $ "Line " ++ show lineNum ++ ": " ++ show expr ++ " | " ++ show comment
+import DataTypes
+import qualified Data.Text.IO ()
+import Literals
+import Text.Megaparsec
+import Text.Megaparsec.Char (char, hspace, eol)
 
 parseFile :: FilePath -> IO ()
 parseFile path = do
     contents <- TIO.readFile path
-    let ls = zip [1..] (T.lines contents)
-    mapM_ (uncurry parseLine) ls
+    case parse program path contents of
+        Left err      -> putStrLn $ errorBundlePretty err
+        Right results -> mapM_ printLine (zip [1..] results)
+
+printLine :: (Int, Line) -> IO ()
+printLine (lineNum, Line expr Nothing) =
+    putStrLn $ "Line " ++ show lineNum ++ ": " ++ show expr
+printLine (lineNum, Line expr (Just comment)) =
+    putStrLn $ "Line " ++ show lineNum ++ ": " ++ show expr ++ " | " ++ show comment
 
 main :: IO ()
 main = parseFile "example.py"
