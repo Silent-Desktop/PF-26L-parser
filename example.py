@@ -1,8 +1,12 @@
+# type: ignore
 if __name__ == "__main__":
     x = 1 + 1
     print(x)
     return [f(x, y, z=1) if x > 2 else g(y, z, x=1) for p in [x for x in z] if x == 1]
 
+class HelloWorld:
+    def __init__(self):
+        print("Hello World")
 
 def funcName(x, y, z, p=None):
     """Multiline

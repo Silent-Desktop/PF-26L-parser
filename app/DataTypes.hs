@@ -34,6 +34,7 @@ data Expr
   | ListCompExpr Expr Expr [Expr]
   | Return Expr
   | Comment String
+  | Class String (Maybe String)
   | Ternary Expr Expr Expr -- Condition | Value | Value if else
   deriving (Show, Eq)
 

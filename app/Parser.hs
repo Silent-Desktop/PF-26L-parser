@@ -1,8 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -Wno-unused-do-bind #-}
 
-module Parser where
-
+module Parser
+    ( module Valuable
+    , module DataTypes
+    , Line(..)
+    , statement
+    , statementWithLine
+    , statementEnd
+    , blankLine
+    , strippedStatement
+    , program
+    ) where
 import qualified Data.Text.IO ()
 import DataTypes
 import Text.Megaparsec
@@ -34,7 +43,7 @@ statementEnd = do
 
 statement :: Parser Expr
 statement = do
-    expr <- try commentExpr <|> try ifExpr <|> try forExpr <|> try whileExpr <|> try assign <|> try functionDeclarationExpr<|>  try boolLogicExpr <|> try boolMathExpr <|> try returnExpr <|> valuable
+    expr <- try commentExpr <|> try ifExpr <|> try forExpr <|> try whileExpr <|> try assign <|> try functionDeclarationExpr<|>  try boolLogicExpr <|> try classExpr <|> try boolMathExpr <|> try returnExpr <|> valuable
     _comment <- statementEnd
     return $  expr 
 
@@ -45,7 +54,8 @@ statementWithLine = do
         <|> try forExpr 
         <|> try whileExpr 
         <|> try functionDeclarationExpr 
-        <|> try assign
+        <|> try classExpr 
+        <|>try assign
         <|> try boolLogicExpr 
         <|> try boolMathExpr 
         <|> try returnExpr 

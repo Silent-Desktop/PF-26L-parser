@@ -5,7 +5,7 @@ module CallSpec (spec) where
 import Data.Either (isLeft)
 import DataTypes
 import Literals
-import Parser
+import Parser(statement)
 import Test.Hspec
 import Text.Megaparsec (parse)
 

@@ -4,7 +4,7 @@ module Assignment (spec) where
 
 import Data.Either (isLeft)
 import DataTypes
-import Parser
+import Parser(statement)
 import Valuable
 import Test.Hspec
 import Text.Megaparsec (parse)

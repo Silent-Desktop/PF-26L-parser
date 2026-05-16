@@ -8,7 +8,6 @@ import DataTypes
 import Literals
 import Text.Megaparsec
 import Utils
-import qualified Text.Megaparsec.Char.Lexer as L
 
 
 parens :: Parser Expr
@@ -236,3 +235,20 @@ commentExpr = do
   symbol "#"
   content <- many (satisfy (/= '\n'))
   return $ Comment content
+
+classExpr :: Parser Expr
+classExpr = do
+  keyword "class"
+  className <- identifier
+  paren <- optional (symbol "(")
+  case paren of
+    Nothing -> do
+      symbol ":"
+      return $ Class className Nothing
+    Just _ -> do
+      inheritance <-identifier
+      symbol ")"
+      symbol ":"
+      return $ Class className (Just inheritance)
+    
+    

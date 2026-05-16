@@ -3,16 +3,10 @@
 {-# OPTIONS_GHC -Wno-unused-do-bind #-}
 module Main where
 
-import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import Parser
-import Control.Monad (void)
-import Text.Megaparsec (errorBundlePretty, parse)
-import DataTypes
 import qualified Data.Text.IO ()
-import Literals
 import Text.Megaparsec
-import Text.Megaparsec.Char (char, hspace, eol)
 
 parseFile :: FilePath -> IO ()
 parseFile path = do

@@ -4,7 +4,7 @@ module LoopSpec (spec) where
 
 import Data.Either (isLeft,isRight)
 import DataTypes
-import Parser
+import Parser(statement)
 import Test.Hspec
 import Text.Megaparsec (parse)
 import Valuable

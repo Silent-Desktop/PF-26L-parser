@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module EverythingSpec (spec) where
 import DataTypes
-import Parser
+import Parser(statement)
 import Test.Hspec
 import Text.Megaparsec (parse)
 spec :: Spec
