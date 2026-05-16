@@ -5,32 +5,24 @@ module Valuable where
 
 import qualified Data.Text.IO ()
 import DataTypes
+import Debug.Trace
 import Literals
 import Text.Megaparsec
 import Utils
 
-
-parens :: Parser Expr
-parens = do
-    symbol "("
-    e <- valuable
-    symbol ")"
-    return e
-
 atom :: Parser Expr
 atom = try call <|> try parens <|> try boolLit <|> try stringLit <|> try walrus <|> try variable <|> number
 
-
 mathAtom :: Parser Expr
-mathAtom =  try listCompExpr <|> atom
+mathAtom = try listCompExpr <|> atom
 
 mathExpr :: Parser Expr
 mathExpr = do
-    left <- mathAtom
-    rest left
+  left <- mathAtom
+  rest left
   where
     rest left =
-            do symbol "+"; right <- mathAtom; rest (Add left right)
+      do symbol "+"; right <- mathAtom; rest (Add left right)
         <|> do symbol "-"; right <- mathAtom; rest (Sub left right)
         <|> do symbol "*"; right <- mathAtom; rest (Mult left right)
         <|> do symbol "/"; right <- mathAtom; rest (Div left right)
@@ -39,17 +31,18 @@ mathExpr = do
 baseExpr :: Parser Expr
 baseExpr = try mathExpr <|> mathAtom
 
+ternaryValue :: Parser Expr
+ternaryValue = try boolLogicExpr <|> try boolMathExpr <|> baseExpr
+
 ternary :: Parser Expr
 ternary = do
-    value <- baseExpr
-    condition <- ifExprInner
-    keyword "else"
-    fallback <- valuable
-    return $ Ternary condition value fallback
+  value <- ternaryValue
+  condition <- ifExprInner
+  keyword "else"
+  Ternary condition value <$> valuable
 
 valuable :: Parser Expr
-valuable = try ternary <|> baseExpr
-
+valuable = try ternary <|> try boolExpr <|> try boolLogicExpr <|> try boolMathExpr <|> baseExpr
 
 posArg :: Parser Arg
 posArg = PosArg <$> valuable
@@ -63,27 +56,52 @@ kwArg = do
 arg :: Parser Arg
 arg = try kwArg <|> posArg
 
+listCompExpr :: Parser Expr
+listCompExpr = do
+  symbol "["
+  prMultiline
+  val <- try ternary <|> baseExpr
+  prMultiline
+  forLoop <- forExprInner
+  prMultiline
+  conditions <- compIfs
+  prMultiline
+  symbol "]"
+  return $ ListCompExpr val forLoop conditions
+
+parens :: Parser Expr
+parens = do
+  symbol "("
+  prMultiline
+  e <- valuable
+  symbol ")" -- use regular symbol, not symbolM
+  return e
+
 args :: Parser [Arg]
 args = do
-  first <- optional arg
+  prMultiline
+  first <- optional (try arg)
   case first of
     Nothing -> return []
     Just a -> rest [a]
   where
     rest acc =
       do
-        symbol ","
-        next <- case last acc of
-          KwArg _ _ -> kwArg -- once we've seen a kwarg, only kwarg allowed
-          PosArg _ -> arg -- still allow either
-        rest (acc ++ [next])
+        try (symbol ",")
+        prMultiline
+        next <- optional (try arg)
+        case next of
+          Nothing -> return acc -- trailing comma, stop
+          Just a -> rest (acc ++ [a])
         <|> return acc
 
 call :: Parser Expr
 call = do
   name <- identifier
   symbol "("
+  prMultiline
   arguments <- args
+  prMultiline
   symbol ")"
   return $ Call name arguments
 
@@ -96,7 +114,6 @@ functionDeclarationExpr = do
   symbol ")"
   symbol ":"
   return $ FuncDeclExpr name arguments
-
 
 eqOp :: Parser EqOp
 eqOp =
@@ -121,26 +138,26 @@ boolOps = many boolOp
 
 boolMathExpr :: Parser Expr
 boolMathExpr = do
-  left <- valuable
+  left <- baseExpr
   operand <- compOp
-  BoolMathExpr operand left <$> valuable
+  BoolMathExpr operand left <$> baseExpr
 
 boolLogicExpr :: Parser Expr
 boolLogicExpr = do
-  left <- valuable
+  left <- baseExpr
   operand <- eqOp
-  BoolLogicExpr operand left <$> valuable
+  BoolLogicExpr operand left <$> baseExpr
 
 boolExpr :: Parser Expr
 boolExpr = do
-    left <- try boolLogicExpr <|> try boolMathExpr <|> valuable
-    rest left
+  left <- try boolLogicExpr <|> try boolMathExpr <|> baseExpr
+  rest left
   where
     rest left =
-        do
-            op <- boolOp
-            right <-  try boolLogicExpr <|>try boolMathExpr <|> valuable
-            rest (BinOp op left right)
+      do
+        op <- boolOp
+        right <- try boolLogicExpr <|> try boolMathExpr <|> baseExpr
+        rest (BinOp op left right)
         <|> return left
 
 assign :: Parser Expr
@@ -153,19 +170,19 @@ walrus :: Parser Expr
 walrus = do
   name <- identifier
   symbol ":="
-  Assign name <$> valuable
+  Walrus name <$> (try walrus <|> try boolExpr <|> baseExpr)
 
 ifExprInner :: Parser Expr
 ifExprInner = do
   keyword "if"
-  content <- boolExpr
-  return $ IfExpr content
+  IfExpr <$> boolExpr
 
 ifExpr :: Parser Expr
 ifExpr = do
   expr <- ifExprInner
   symbol ":"
-  return $ expr
+  return expr
+
 elifExpr :: Parser Expr
 elifExpr = do
   keyword "elif"
@@ -176,9 +193,8 @@ elifExpr = do
 elseExpr :: Parser Expr
 elseExpr = do
   keyword "else"
-  content <- boolExpr
   symbol ":"
-  return $ ElseExpr content
+  return ElseExpr
 
 whileExpr :: Parser Expr
 whileExpr = do
@@ -192,43 +208,36 @@ forExprInner = do
   keyword "for"
   iden <- identifier
   keyword "in"
-  content <- valuable
-  return $ ForLoop  iden content
+  ForLoop iden <$> valuable
+
 forExpr :: Parser Expr
 forExpr = do
   forLoop <- forExprInner
   symbol ":"
-  return $ forLoop
-
+  return forLoop
 
 compIfs :: Parser [Expr]
 compIfs = do
-  condition <- optional ifExprInner
+  condition <- optional (try ifExprInner)
   case condition of
     Nothing -> return []
     Just a -> rest [a]
   where
     rest acc =
       do
-        next <- ifExprInner
+        next <- try (prMultiline >> ifExprInner)
         rest (acc ++ [next])
         <|> return acc
-
-
-
-listCompExpr :: Parser Expr
-listCompExpr = do
-    symbol "["
-    val <- try ternary <|> baseExpr
-    forLoop <- forExprInner
-    conditions <- compIfs
-    symbol "]"
-    return $ ListCompExpr val forLoop conditions
 
 returnExpr :: Parser Expr
 returnExpr = do
   keyword "return"
   Return <$> valuable
+
+passExpr :: Parser Expr
+passExpr = do
+  keyword "pass"
+  return Pass
 
 commentExpr :: Parser Expr
 commentExpr = do
@@ -246,9 +255,7 @@ classExpr = do
       symbol ":"
       return $ Class className Nothing
     Just _ -> do
-      inheritance <-identifier
+      inheritance <- identifier
       symbol ")"
       symbol ":"
       return $ Class className (Just inheritance)
-    
-    

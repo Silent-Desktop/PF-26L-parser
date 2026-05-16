@@ -11,7 +11,7 @@ import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
 
 pr :: Parser ()
-pr = L.space hspace1 empty empty
+pr = skipMany (satisfy (\c -> c == ' ' || c == '\t'))
 
 helper :: Parser a -> Parser a
 helper = L.lexeme pr
@@ -21,10 +21,10 @@ reserved = ["if", "else", "while", "for", "def", "return", "True", "False"]
 
 identifier :: Parser String
 identifier = helper $ do
-    name <- (:) <$> (letterChar <|> char '_') <*> many (alphaNumChar <|> char '_')
-    if name `elem` reserved
-        then fail $ name ++ " is a reserved keyword"
-        else return name
+  name <- (:) <$> (letterChar <|> char '_') <*> many (alphaNumChar <|> char '_')
+  if name `elem` reserved
+    then fail $ name ++ " is a reserved keyword"
+    else return name
 
 variable :: Parser Expr
 variable = Var <$> identifier
@@ -35,3 +35,11 @@ keyword kw = helper (string kw <* notFollowedBy alphaNumChar)
 symbol :: Text -> Parser Text
 symbol = L.symbol pr
 
+prMultiline :: Parser ()
+prMultiline = L.space space1 empty empty
+
+symbolM :: Text -> Parser Text
+symbolM = L.symbol prMultiline
+
+helperM :: Parser a -> Parser a
+helperM = L.lexeme prMultiline

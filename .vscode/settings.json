@@ -1,5 +1,5 @@
 {
-    "python.analysis.exclude": ["example.py"],
-    "ruff.exclude": ["example.py"],
-    "flake8.enabled": false
+	"python.analysis.exclude": ["example.py", "example2.py"],
+	"ruff.exclude": ["example.py", "example2.py"],
+	"flake8.enabled": false
 }

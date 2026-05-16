@@ -23,7 +23,7 @@ data Expr
   | BinOp BoolOp Expr Expr
   | IfExpr Expr
   | ElifExpr Expr
-  | ElseExpr Expr
+  | ElseExpr
   | WhileLoop Expr
   | ForLoop String Expr
   | MultilineStringLit String
@@ -34,6 +34,8 @@ data Expr
   | ListCompExpr Expr Expr [Expr]
   | Return Expr
   | Comment String
+  | Pass
+  | Walrus String Expr
   | Class String (Maybe String)
   | Ternary Expr Expr Expr -- Condition | Value | Value if else
   deriving (Show, Eq)
