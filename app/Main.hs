@@ -88,24 +88,47 @@ processLines (line@(Line expr comment indent sourcePos) : rest) state = do
     else
       if indent < currentIndent state && not (isComment expr)
         then do
-          traceM $ "Got out of block at line: " ++ show sourcePos
-          -- end of block
-          -- putStrLn ""
-          let (block, stack) = pop (blockStack state)
-          -- traceM $ "Popped stack: " ++ show block
-          case block of
-            Nothing -> do
-              traceM $ "Current block: " ++ show (currentBlock state)
-              fail $ "Something went wrong"
-            Just blockSafe -> do
-              -- print (currentBlock state)
-              let newBlock = blockSafe {content = content blockSafe ++ [BBlock (currentBlock state)]}
-              let newState = processLinesRest line state {currentBlock = newBlock, blockStack = stack}
-              processLines rest newState
+          traceM $
+            "Got out of block at line: "
+              ++ show
+                sourcePos
+          -- let (block, stack) = pop (blockStack state)
+          -- -- traceM $ "Popped stack: " ++ show block
+          -- case block of
+          --   Nothing -> do
+          --     -- traceM $ "Current block: " ++ show (currentBlock state)
+          --     fail $ "Something went wrong"
+          --   Just blockSafe -> do
+          --     -- print (currentBlock state)
+          --     let newBlock = blockSafe {content = content blockSafe ++ [BBlock (currentBlock state)]}
+          --     let newState = processLinesRest line state {currentBlock = newBlock, blockStack = stack}
+          --     processLines rest newState
+          processLines
+            rest
+            (recurseBlocks indent (currentIndent state) line state)
         else do
           -- putStrLn ""
           let newState = processLinesRest line state
           processLines rest newState
+
+recurseBlocks :: Int -> Int -> Line -> ParseState -> ParseState
+recurseBlocks indent destIndent line state
+  | indent >= destIndent = processLinesRest line state
+  | otherwise = do
+      let (block, stack) = pop (blockStack state)
+       in case block of
+            Nothing -> error "recurseBlocks: empty stack, something went wrong"
+            Just blockSafe ->
+              let newBlock =
+                    blockSafe
+                      { content = content blockSafe ++ [BBlock (currentBlock state)]
+                      }
+                  newState =
+                    state
+                      { currentBlock = newBlock,
+                        blockStack = stack
+                      }
+               in recurseBlocks indent (destIndent - indentSize state) line newState
 
 processLinesRest :: Line -> ParseState -> ParseState
 processLinesRest line@(Line expr comment indent sourcePos) state = do
