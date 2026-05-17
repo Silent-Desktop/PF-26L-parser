@@ -17,7 +17,7 @@ helper :: Parser a -> Parser a
 helper = L.lexeme pr
 
 reserved :: [String]
-reserved = ["if", "else", "while", "for", "def", "return", "True", "False"]
+reserved = ["if", "else", "while", "for", "def", "return", "True", "False", "None", "is", "in", "not"]
 
 identifier :: Parser String
 identifier = helper $ do

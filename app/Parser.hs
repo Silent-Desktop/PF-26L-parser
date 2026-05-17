@@ -60,6 +60,6 @@ statementEnd = do
 
 statement :: Parser Expr
 statement = do
-  expr <- try commentExpr <|> try ifExpr <|> try forExpr <|> try whileExpr <|> try assign <|> try functionDeclarationExpr <|> try boolLogicExpr <|> try classExpr <|> try boolMathExpr <|> try returnExpr <|> valuable
+  expr <- try commentExpr <|> try ifExpr <|> try forExpr <|> try whileExpr <|> try assign <|> try functionDeclarationExpr <|> try classExpr <|> try returnExpr <|> valuable
   _comment <- statementEnd
   return expr

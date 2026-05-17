@@ -3,17 +3,58 @@
 
 module Valuable where
 
+import Control.Arrow (ArrowChoice (left))
 import qualified Data.Text.IO ()
 import DataTypes
 import Literals
 import Text.Megaparsec
 import Utils
 
+-- chain of dot accesses and index suffixes
 atom :: Parser Expr
-atom = try call <|> try parens <|> try boolLit <|> try stringLit <|> try walrus <|> try variable <|> number
+atom = do
+  try simpleCall
+    <|> try parens
+    <|> try boolLit
+    <|> try stringLit
+    <|> try noneLit
+    <|> try listLit
+    <|> try walrus
+    <|> try variable
+    <|> number
+
+-- simple call is just identifier(args)
+simpleCall :: Parser Expr
+simpleCall = do
+  name <- identifier
+  symbol "("
+  arguments <- args
+  symbol ")"
+  return $ Call name arguments
+
+accessChain :: Expr -> Parser Expr
+accessChain base = do
+  access <-
+    optional $
+      try (symbol "." >> identifier >>= \name -> return (\e -> DotAccess e name))
+        <|> try
+          ( do
+              symbol "["
+              prMultiline
+              idx <- valuable
+              prMultiline
+              symbol "]"
+              return (\e -> Index e idx)
+          )
+        <|> try (symbol "(" >> args >>= \a -> symbol ")" >> return (\e -> Call' e a))
+  case access of
+    Nothing -> return base
+    Just f -> accessChain (f base)
 
 mathAtom :: Parser Expr
-mathAtom = try listCompExpr <|> atom
+mathAtom = do
+  base <- try listCompExpr <|> try listLit <|> atom
+  accessChain base
 
 mathExpr :: Parser Expr
 mathExpr = do
@@ -27,8 +68,20 @@ mathExpr = do
         <|> do symbol "/"; right <- mathAtom; rest (Div left right)
         <|> return left
 
+mathAssign :: Parser Expr
+mathAssign = do
+  left <- variable
+  rest left
+  where
+    rest left =
+      do symbol "+="; right <- valuable; rest (AddAssign left right)
+        <|> do symbol "-="; right <- valuable; rest (SubAssign left right)
+        <|> do symbol "*="; right <- valuable; rest (MultAssign left right)
+        <|> do symbol "/="; right <- valuable; rest (DivAssign left right)
+        <|> return left
+
 baseExpr :: Parser Expr
-baseExpr = try mathExpr <|> mathAtom
+baseExpr = try mathExpr <|> mathAssign <|> mathAtom
 
 ternaryValue :: Parser Expr
 ternaryValue = try boolLogicExpr <|> try boolMathExpr <|> baseExpr
@@ -54,6 +107,34 @@ kwArg = do
 
 arg :: Parser Arg
 arg = try kwArg <|> posArg
+
+listLit :: Parser Expr
+listLit = do
+  symbol "["
+  prMultiline
+  first <- optional (try valuable) -- safe, guarded by "["
+  case first of
+    Nothing -> do
+      prMultiline
+      symbol "]"
+      return $ ListLit []
+    Just a -> rest [a]
+  where
+    rest acc =
+      do
+        try (symbol ",")
+        prMultiline
+        next <- optional (try valuable) -- safe, guarded by ","
+        case next of
+          Nothing -> do
+            prMultiline
+            symbol "]"
+            return $ ListLit acc
+          Just a -> rest (acc ++ [a])
+        <|> do
+          prMultiline
+          symbol "]"
+          return $ ListLit acc
 
 listCompExpr :: Parser Expr
 listCompExpr = do
@@ -128,6 +209,10 @@ compOp =
     <|> ( EqComp
             <$> eqOp
         )
+    <|> try (keyword "not" >> keyword "in" >> return NotIn)
+    <|> try (keyword "in" >> return In)
+    <|> try (keyword "is" >> keyword "not" >> return IsNot)
+    <|> try (keyword "is" >> return Is)
     <|> (symbol ">" >> return Gt)
     <|> (symbol "<" >> return Lt)
 

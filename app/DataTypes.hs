@@ -17,6 +17,10 @@ data Expr
   | Sub Expr Expr
   | Mult Expr Expr
   | Div Expr Expr
+  | AddAssign Expr Expr
+  | SubAssign Expr Expr
+  | MultAssign Expr Expr
+  | DivAssign Expr Expr
   | MathExpr
   | BoolMathExpr CompOp Expr Expr
   | BoolLogicExpr EqOp Expr Expr
@@ -35,8 +39,12 @@ data Expr
   | Return Expr
   | Comment String
   | Pass
+  | ListLit [Expr]
   | Walrus String Expr
   | Class String (Maybe String)
+  | DotAccess Expr String -- obj.field
+  | Call' Expr [Arg] -- expr(args) e.g. f().g()
+  | Index Expr Expr -- obj[idx]
   | Ternary Expr Expr Expr -- Condition | Value | Value if else
   deriving (Show, Eq)
 
@@ -44,12 +52,12 @@ data BoolOp = And | Or deriving (Show, Eq)
 
 data EqOp = Equal | Neq deriving (Show, Eq)
 
-data CompOp = Gt | Lt | Gte | Lte | EqComp EqOp deriving (Show, Eq)
+data CompOp = Gt | Lt | Gte | In | NotIn | Is | IsNot | Lte | EqComp EqOp deriving (Show, Eq)
 
 data Arg
   = PosArg Expr
   | KwArg String Expr
   deriving (Show, Eq)
 
-data Keyword = KTrue | KFalse | KIf | KElse | KWhile | KFor | KDef | KReturn
+data Keyword = KTrue | KFalse | KIf | KElse | KWhile | KFor | KDef | KReturn | KNone
   deriving (Show, Eq)

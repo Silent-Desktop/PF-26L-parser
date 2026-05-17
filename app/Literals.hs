@@ -5,7 +5,6 @@ module Literals where
 
 import qualified Data.Text.IO ()
 import DataTypes
-import Debug.Trace
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
@@ -59,3 +58,6 @@ stringLit =
   where
     doubleQuoted = StringLit <$> (char '"' *> manyTill (stringChar '"') (char '"') <* notFollowedBy (char '"'))
     singleQuoted = StringLit <$> (char '\'' *> manyTill (stringChar '\'') (char '\'') <* notFollowedBy (char '\''))
+
+noneLit :: Parser Expr
+noneLit = keyword "None" >> return (Lit KNone)
