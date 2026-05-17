@@ -101,8 +101,11 @@ if x > 0:
     z = 1
 elif x == 0:
     z = 2
+elif x == 1:
+    z = 2
 else:
     z = 3
+
 
 # While loops
 while x > 0:
@@ -134,6 +137,9 @@ def with_args(a, b):
 class HelloWorld(Inherit):
     def __init__(self, hello):
         print("Hello world")
+
+    def hi(self, text, ending="\n"):
+        print(text, end=ending)
 
 
 def with_defaults(a, b, c=1):
