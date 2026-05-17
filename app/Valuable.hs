@@ -5,7 +5,6 @@ module Valuable where
 
 import qualified Data.Text.IO ()
 import DataTypes
-import Debug.Trace
 import Literals
 import Text.Megaparsec
 import Utils
@@ -89,9 +88,11 @@ args = do
       do
         try (symbol ",")
         prMultiline
-        next <- optional (try arg)
+        next <- optional $ try $ case last acc of
+          KwArg _ _ -> kwArg
+          PosArg _ -> arg
         case next of
-          Nothing -> return acc -- trailing comma, stop
+          Nothing -> return acc
           Just a -> rest (acc ++ [a])
         <|> return acc
 
